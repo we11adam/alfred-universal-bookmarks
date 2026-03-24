@@ -1,0 +1,20 @@
+[package]
+name = "alfred-universal-bookmarks"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "ub"
+path = "src/main.rs"
+
+[dependencies]
+alfred = "4.0.2"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
