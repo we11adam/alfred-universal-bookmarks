@@ -1,8 +1,8 @@
 mod extractor;
 mod types;
-use std::{env, io};
-use alfred::Item;
 use crate::types::BookmarkEntry;
+use alfred::{Item, ItemBuilder, json};
+use std::{env, io};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -12,15 +12,16 @@ fn main() {
         return;
     }
 
+    eprintln!("args: {:?}", &args);
+
     let action = &args[1];
-    eprint!("args: {:?}", &args);
     match action.as_str() {
         "search" => {
             let keyword = &args[2];
             search(keyword);
         }
         _ => {
-            eprint!("Unsupported action: {}", action);
+            eprintln!("Unsupported action: {}", action);
         }
     }
 }
@@ -44,11 +45,16 @@ fn search(keyword: &str) {
     }
 
     name_matches.append(&mut url_matches);
-    let _ = alfred::json::write_items(io::stdout(), &name_matches);
+    eprintln!(
+        "Found {:?} matches for keyword: {}",
+        name_matches.len(),
+        keyword
+    );
+    let _ = json::write_items(io::stdout(), &name_matches);
 }
 
 fn build_item<'a>(bookmark: &'a BookmarkEntry) -> Item<'a> {
-    alfred::ItemBuilder::new(bookmark.name.clone())
+    ItemBuilder::new(bookmark.name.clone())
         .subtitle(bookmark.url.as_ref())
         .arg(bookmark.url.as_ref())
         .into_item()

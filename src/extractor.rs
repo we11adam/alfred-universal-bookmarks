@@ -5,20 +5,67 @@ use std::path::Path;
 
 pub fn extract_bookmarks<'a>() -> Vec<BookmarkEntry<'a>> {
     let Ok(home) = env::var("HOME") else {
-        eprint!("Failed to get HOME environment variable");
+        eprintln!("Failed to get HOME environment variable");
         return Vec::new();
     };
 
     BOOKMARK_PROVIDERS
         .iter()
-        .filter(|entry| entry.0 != "safari")
-        .flat_map(|(_, path)| {
+        .flat_map(|(name, path)| {
             let bookmark_file = Path::new(&home).join(path);
-            extract_from_chromiumlike(&bookmark_file)
+            if *name == "safari" {
+                extract_from_safari(&bookmark_file)
+            } else {
+                extract_from_chromiumlike(&bookmark_file)
+            }
         })
         .collect()
 }
 
+pub fn extract_from_safari<'a, P: AsRef<Path>>(path: P) -> Vec<BookmarkEntry<'a>> {
+    let raw_bookmarks = plist::from_file::<_, SafariBookmarks>(path);
+
+    let raw_bookmarks = match raw_bookmarks {
+        Ok(bookmarks) => bookmarks,
+        Err(e) => {
+            eprintln!("Failed to parse safari bookmarks: {}\n", e);
+            return Vec::new();
+        }
+    };
+
+    let mut results = Vec::new();
+    if let Some(children) = raw_bookmarks.children {
+        for entry in children {
+            collect_safari_urls(entry, &mut results);
+        }
+    }
+    results
+}
+
+fn collect_safari_urls(entry: SafariEntry, results: &mut Vec<BookmarkEntry>) {
+    match entry.web_bookmark_type {
+        SafariEntryType::WebBookmarkTypeLeaf => {
+            if let Some(url) = entry.url_string {
+                let name = if let Some(title) = entry.title {
+                    title
+                } else if let Some(uri_dict) = entry.uri_dictionary {
+                    uri_dict.title
+                } else {
+                    url.clone()
+                };
+                results.push(BookmarkEntry::new(name, url));
+            }
+        }
+        SafariEntryType::WebBookmarkTypeList => {
+            if let Some(children) = entry.children {
+                for child in children {
+                    collect_safari_urls(child, results);
+                }
+            }
+        }
+        _ => {}
+    }
+}
 
 // handles chromiumlike bookmarks
 pub fn extract_from_chromiumlike<'a, P: AsRef<Path>>(path: P) -> Vec<BookmarkEntry<'a>> {
@@ -32,7 +79,6 @@ pub fn extract_from_chromiumlike<'a, P: AsRef<Path>>(path: P) -> Vec<BookmarkEnt
 
     extract_all_urls(&raw_bookmarks)
 }
-
 
 // collect all URls
 fn extract_all_urls<'a>(bookmarks: &ChromiumLikeBookmarks) -> Vec<BookmarkEntry<'a>> {
@@ -51,7 +97,6 @@ fn extract_all_urls<'a>(bookmarks: &ChromiumLikeBookmarks) -> Vec<BookmarkEntry<
     }
     results
 }
-
 
 // recursively collect URls, mutating the results vector as we go
 fn collect_urls(payload: &ChromiumLikeEntry, results: &mut Vec<BookmarkEntry>) {

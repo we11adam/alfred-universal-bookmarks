@@ -54,6 +54,39 @@ pub enum ChromiumLikeEntryItemType {
     Url,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SafariBookmarks {
+    #[serde(rename = "Children")]
+    pub children: Option<Vec<SafariEntry>>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SafariEntry {
+    #[serde(rename = "Title")]
+    pub title: Option<String>,
+    #[serde(rename = "URLString")]
+    pub url_string: Option<String>,
+    #[serde(rename = "Children")]
+    pub children: Option<Vec<SafariEntry>>,
+    #[serde(rename = "WebBookmarkType")]
+    pub web_bookmark_type: SafariEntryType,
+    #[serde(rename = "URIDictionary")]
+    pub uri_dictionary: Option<SafariURIDictionary>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
+pub enum SafariEntryType {
+    WebBookmarkTypeLeaf,
+    WebBookmarkTypeList,
+    #[serde(other)]
+    Unknown,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SafariURIDictionary {
+    pub title: String,
+}
+
 pub const BOOKMARK_PROVIDERS: &[(&str, &str)] = &[
     (
         "brave",
