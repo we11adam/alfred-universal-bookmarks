@@ -9,7 +9,7 @@ pub fn extract_bookmarks<'a>() -> Vec<BookmarkEntry<'a>> {
         return Vec::new();
     };
 
-    BOOKMARK_PROVIDERS
+    let mut bookmarks: Vec<BookmarkEntry> = BOOKMARK_PROVIDERS
         .iter()
         .flat_map(|(name, path)| {
             let bookmark_file = Path::new(&home).join(path);
@@ -19,7 +19,17 @@ pub fn extract_bookmarks<'a>() -> Vec<BookmarkEntry<'a>> {
                 extract_from_chromiumlike(&bookmark_file)
             }
         })
-        .collect()
+        .collect();
+
+    deduplicate(&mut bookmarks);
+    bookmarks
+}
+
+pub fn deduplicate(bookmarks: &mut Vec<BookmarkEntry>) {
+    bookmarks.sort_by(|a, b| {
+        a.url.cmp(&b.url).then_with(|| b.name.len().cmp(&a.name.len()))
+    });
+    bookmarks.dedup_by(|a, b| a.url == b.url);
 }
 
 pub fn extract_from_safari<'a, P: AsRef<Path>>(path: P) -> Vec<BookmarkEntry<'a>> {
