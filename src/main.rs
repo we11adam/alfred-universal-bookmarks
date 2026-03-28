@@ -2,7 +2,7 @@ mod extractor;
 mod types;
 use crate::types::*;
 use alfred::{Item, ItemBuilder, json};
-use std::{env, io};
+use std::{collections::HashSet, env, io};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -45,7 +45,7 @@ fn search(keyword: &str) {
     }
 
     name_matches.append(&mut url_matches);
-    // deduplicate(&name_matches);
+    deduplicate(&mut name_matches);
     eprintln!(
         "Found {:?} matches for keyword: {}",
         name_matches.len(),
@@ -61,4 +61,9 @@ fn build_item<'a>(bookmark: &'a BookmarkEntry) -> Item<'a> {
         .subtitle(subtitle)
         .arg(bookmark.url.as_ref())
         .into_item()
+}
+
+fn deduplicate(items: &mut Vec<Item>) {
+    let mut seen = HashSet::new();
+    items.retain(|item| seen.insert(item.arg.clone()));
 }
