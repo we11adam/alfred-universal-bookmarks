@@ -14,10 +14,30 @@ struct ChromiumCollector<'a> {
 
 impl<'a> Collector<'a> for ChromiumCollector<'a> {
     fn collect(&mut self, path: &Path, matches: &mut Vec<BookmarkEntry<'a>>) {
-        let Ok(file) = File::open(path) else { return };
+        let file = File::open(path);
+        let file = match file {
+            Ok(f) => f,
+            Err(e) => {
+                eprintln!(
+                    "Failed to open bookmark file at {} with error: {}",
+                    path.display(),
+                    e
+                );
+                return;
+            }
+        };
 
-        let Ok(raw_bookmarks) = serde_json::from_reader::<_, ChromiumBookmarks>(file) else {
-            return;
+        let raw_bookmarks = serde_json::from_reader::<_, ChromiumBookmarks>(file);
+        let raw_bookmarks = match raw_bookmarks {
+            Ok(b) => b,
+            Err(e) => {
+                eprintln!(
+                    "Failed to parse bookmark file at {} with error: {}",
+                    path.display(),
+                    e
+                );
+                return;
+            }
         };
 
         self.extract_all(&raw_bookmarks, matches);
