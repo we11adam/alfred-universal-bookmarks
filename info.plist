@@ -5,7 +5,7 @@
 	<key>bundleid</key>
 	<string>com.welladam.universalbookmarks</string>
 	<key>category</key>
-	<string>Internet</string>
+	<string>Productivity</string>
 	<key>connections</key>
 	<dict>
 		<key>2E802FCB-9F21-4B19-A562-7AF914034992</key>
@@ -74,7 +74,7 @@
 	<key>createdby</key>
 	<string>Adam Lau</string>
 	<key>description</key>
-	<string></string>
+	<string>Blazing fast, all-browser bookmark searcher.</string>
 	<key>disabled</key>
 	<false/>
 	<key>name</key>
@@ -285,6 +285,6 @@
 	<key>userconfigurationconfig</key>
 	<array/>
 	<key>webaddress</key>
-	<string>http://tinycode.me</string>
+	<string>https://github.com/we11adam/alfred-universal-bookmarks</string>
 </dict>
 </plist>
