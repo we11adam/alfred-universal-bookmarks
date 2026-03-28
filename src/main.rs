@@ -61,6 +61,7 @@ fn build_item<'a>(bookmark: &'a BookmarkEntry) -> Item<'a> {
         .subtitle(subtitle)
         .arg(bookmark.url.as_ref())
         .uid(bookmark.url.as_ref())
+        .icon_path("./icon.png")
         .into_item()
 }
 
