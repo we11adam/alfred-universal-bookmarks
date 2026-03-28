@@ -60,6 +60,7 @@ fn build_item<'a>(bookmark: &'a BookmarkEntry) -> Item<'a> {
     ItemBuilder::new(bookmark.name.as_ref())
         .subtitle(subtitle)
         .arg(bookmark.url.as_ref())
+        .uid(bookmark.url.as_ref())
         .into_item()
 }
 
