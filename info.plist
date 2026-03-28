@@ -33,12 +33,35 @@
 				<key>vitoclose</key>
 				<false/>
 			</dict>
+			<dict>
+				<key>destinationuid</key>
+				<string>E191EA6D-05CC-44F7-B2DC-8BBBF939D3E9</string>
+				<key>modifiers</key>
+				<integer>524288</integer>
+				<key>modifiersubtext</key>
+				<string>Copy the selected URL to clipboard</string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
 		</array>
 		<key>8734AA64-95C2-4286-BBA4-7734583B1641</key>
 		<array>
 			<dict>
 				<key>destinationuid</key>
 				<string>C3A3CB21-6F97-4B80-9885-2979AEAB6F2B</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>E191EA6D-05CC-44F7-B2DC-8BBBF939D3E9</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>27325899-364E-4AD4-BA1B-EDA09D34FE7E</string>
 				<key>modifiers</key>
 				<integer>0</integer>
 				<key>modifiersubtext</key>
@@ -171,11 +194,58 @@
 			<key>version</key>
 			<integer>1</integer>
 		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>lastpathcomponent</key>
+				<false/>
+				<key>onlyshowifquerypopulated</key>
+				<true/>
+				<key>removeextension</key>
+				<false/>
+				<key>text</key>
+				<string>{query}</string>
+				<key>title</key>
+				<string>The following URL is copied to clipboard!</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.notification</string>
+			<key>uid</key>
+			<string>27325899-364E-4AD4-BA1B-EDA09D34FE7E</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>autopaste</key>
+				<false/>
+				<key>clipboardtext</key>
+				<string>{query}</string>
+				<key>ignoredynamicplaceholders</key>
+				<false/>
+				<key>transient</key>
+				<false/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.clipboard</string>
+			<key>uid</key>
+			<string>E191EA6D-05CC-44F7-B2DC-8BBBF939D3E9</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
 	</array>
 	<key>readme</key>
 	<string></string>
 	<key>uidata</key>
 	<dict>
+		<key>27325899-364E-4AD4-BA1B-EDA09D34FE7E</key>
+		<dict>
+			<key>xpos</key>
+			<real>785</real>
+			<key>ypos</key>
+			<real>280</real>
+		</dict>
 		<key>2E802FCB-9F21-4B19-A562-7AF914034992</key>
 		<dict>
 			<key>xpos</key>
@@ -203,6 +273,13 @@
 			<real>620</real>
 			<key>ypos</key>
 			<real>105</real>
+		</dict>
+		<key>E191EA6D-05CC-44F7-B2DC-8BBBF939D3E9</key>
+		<dict>
+			<key>xpos</key>
+			<real>625</real>
+			<key>ypos</key>
+			<real>280</real>
 		</dict>
 	</dict>
 	<key>userconfigurationconfig</key>
