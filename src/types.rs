@@ -1,23 +1,29 @@
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
+pub const PATH_SPLIT: &str = " » ";
+
 #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub struct BookmarkEntry<'a> {
     pub name: Cow<'a, str>,
     pub url: Cow<'a, str>,
+    pub path: Cow<'a, str>,
+    pub source: Cow<'a, str>,
 }
 
 impl<'a> BookmarkEntry<'a> {
-    pub fn new<S: Into<Cow<'a, str>>>(name: S, url: S) -> BookmarkEntry<'a> {
+    pub fn new<S: Into<Cow<'a, str>>>(name: S, url: S, path: S, source: S) -> BookmarkEntry<'a> {
         Self {
             name: name.into(),
             url: url.into(),
+            path: path.into(),
+            source: source.into(),
         }
     }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct ChromiumLikeBookmarks {
+pub struct ChromiumBookmarks {
     pub checksum: String,
     pub roots: Roots,
     pub sync_metadata: Option<String>,
@@ -26,16 +32,16 @@ pub struct ChromiumLikeBookmarks {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Roots {
-    pub bookmark_bar: ChromiumLikeEntry,
-    pub other: ChromiumLikeEntry,
-    pub synced: ChromiumLikeEntry,
+    pub bookmark_bar: ChromiumEntry,
+    pub other: ChromiumEntry,
+    pub synced: ChromiumEntry,
     #[serde(default)] // skip when not available
-    pub workspaces_v2: Option<ChromiumLikeEntry>,
+    pub workspaces_v2: Option<ChromiumEntry>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct ChromiumLikeEntry {
-    pub children: Option<Vec<ChromiumLikeEntry>>,
+pub struct ChromiumEntry {
+    pub children: Option<Vec<ChromiumEntry>>,
     pub date_added: String,
     pub date_last_used: String,
     pub date_modified: Option<String>,
@@ -44,12 +50,12 @@ pub struct ChromiumLikeEntry {
     pub name: String,
     pub source: String,
     pub url: Option<String>,
-    pub r#type: ChromiumLikeEntryItemType,
+    pub r#type: ChromiumEntryItemType,
 }
 
 #[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
 #[serde(rename_all = "lowercase")]
-pub enum ChromiumLikeEntryItemType {
+pub enum ChromiumEntryItemType {
     Folder,
     Url,
 }
@@ -88,57 +94,57 @@ pub struct SafariURIDictionary {
 }
 
 pub const BOOKMARK_PROVIDERS: &[(&str, &str)] = &[
+    ("Safari", "Library/Safari/Bookmarks.plist"),
     (
-        "brave",
+        "Brave",
         "Library/Application Support/BraveSoftware/Brave-Browser/Default/Bookmarks",
     ),
     (
-        "brave_beta",
+        "Brave Beta",
         "Library/Application Support/BraveSoftware/Brave-Browser-Beta/Default/Bookmarks",
     ),
     (
-        "chrome",
+        "Google Chrome",
         "Library/Application Support/Google/Chrome/Default/Bookmarks",
     ),
     (
-        "chromium",
+        "Chromium",
         "Library/Application Support/Chromium/Default/Bookmarks",
     ),
     (
-        "opera",
+        "Opera",
         "Library/Application Support/com.operasoftware.Opera/Bookmarks",
     ),
     (
-        "sidekick",
+        "Sidekick",
         "Library/Application Support/Sidekick/Default/Bookmarks",
     ),
     (
-        "vivaldi",
+        "Vivaldi",
         "Library/Application Support/Vivaldi/Default/Bookmarks",
     ),
     (
-        "edge",
+        "Microsoft Edge",
         "Library/Application Support/Microsoft Edge/Default/Bookmarks",
     ),
     (
-        "arc",
+        "Arc",
         "Library/Application Support/Arc/User Data/Default/Bookmarks",
     ),
     (
-        "dia",
+        "Dia",
         "Library/Application Support/Dia/User Data/Default/Bookmarks",
     ),
     (
-        "thorium",
+        "Thorium",
         "Library/Application Support/Thorium/Default/Bookmarks",
     ),
     (
-        "comet",
+        "Comet",
         "Library/Application Support/Comet/Default/Bookmarks",
     ),
     (
-        "helium",
+        "Helium",
         "Library/Application Support/net.imput.helium/Default/Bookmarks",
     ),
-    ("safari", "Library/Safari/Bookmarks.plist"),
 ];

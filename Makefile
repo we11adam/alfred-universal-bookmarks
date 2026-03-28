@@ -6,3 +6,7 @@ release:
 dev:
 	cargo build
 	mv target/debug/ub .
+
+
+fmt:
+	cargo fmt --all

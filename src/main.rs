@@ -1,6 +1,6 @@
 mod extractor;
 mod types;
-use crate::types::BookmarkEntry;
+use crate::types::*;
 use alfred::{Item, ItemBuilder, json};
 use std::{env, io};
 
@@ -12,7 +12,7 @@ fn main() {
         return;
     }
 
-    eprintln!("args: {:?}", &args);
+    eprintln!("Args: {:?}", &args);
 
     let action = &args[1];
     match action.as_str() {
@@ -45,6 +45,7 @@ fn search(keyword: &str) {
     }
 
     name_matches.append(&mut url_matches);
+    // deduplicate(&name_matches);
     eprintln!(
         "Found {:?} matches for keyword: {}",
         name_matches.len(),
@@ -54,8 +55,10 @@ fn search(keyword: &str) {
 }
 
 fn build_item<'a>(bookmark: &'a BookmarkEntry) -> Item<'a> {
-    ItemBuilder::new(bookmark.name.clone())
-        .subtitle(bookmark.url.as_ref())
+    let subtitle =
+        bookmark.source.to_string() + PATH_SPLIT + bookmark.path.as_ref() + bookmark.url.as_ref();
+    ItemBuilder::new(bookmark.name.as_ref())
+        .subtitle(subtitle)
         .arg(bookmark.url.as_ref())
         .into_item()
 }
