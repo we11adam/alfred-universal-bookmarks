@@ -1,0 +1,54 @@
+# Alfred Universal Bookmarks
+
+A blazing-fast Alfred Workflow written in Rust that allows you to search bookmarks across all your installed browsers simultaneously.
+
+## Features
+
+- ⚡ **Blazing Fast**: Powered by Rust for near-instant searching across thousands of bookmarks.
+- 🌐 **Multi-Browser Support**: Search bookmarks from Safari, Chrome, Brave, Arc, Edge, and more.
+- 🦄 **Unified Results**: See all your bookmarks in one place, with their source and folder path clearly displayed.
+- 🧹 **Deduplication**: Automatically hides duplicate URLs across different browsers.
+-  **Universal Binary**: Supports both Intel-based and Apple Silicon Macs.
+- 📎 **Copy to Clipboard**: Use `Alt/Option + Enter` to copy the URL directly to your clipboard.
+
+## Supported Browsers
+
+Universal Bookmarks currently supports:
+
+- **Safari**
+- **Google Chrome**
+- **Microsoft Edge**
+- **Brave & Brave Beta**
+- **Arc**
+- **Vivaldi**
+- **Opera**
+- **Sidekick**
+- **Chromium**
+- **Thorium**
+- **Dia**
+- **Comet**
+- **Helium**
+
+## Installation
+Go to the [releases](https://github.com/we11adam/alfred-universal-bookmarks/releases) page, click on the UniversalBookmarks.alfredworkflow file to download it. Then, double-click the file to import it into Alfred.
+
+### Prerequisites
+
+- [Alfred 5](https://www.alfredapp.com/) with Powerpack.
+
+### Setting up Alfred
+
+1. Open the project folder in Finder.
+2. The `info.plist` is already configured. You can import the workflow into Alfred by double-clicking the folder or the `info.plist` file (Alfred should recognize it).
+3. Ensure the `ub` binary is in the workflow directory.
+
+## Usage
+
+1. Open Alfred.
+2. Type `ub` followed by your search query.
+3. Press `Enter` to open the bookmark in your default browser.
+4. Press `Alt/Option + Enter` to copy the URL to your clipboard.
+
+## License
+
+MIT
