@@ -48,7 +48,7 @@ pub struct ChromiumEntry {
     pub guid: String,
     pub id: String,
     pub name: String,
-    pub source: String,
+    pub source: Option<String>,
     pub url: Option<String>,
     pub r#type: ChromiumEntryItemType,
 }
