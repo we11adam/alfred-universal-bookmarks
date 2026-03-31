@@ -1,5 +1,7 @@
 # Alfred Universal Bookmarks
 
+[![Release Alfred Workflow](https://github.com/we11adam/alfred-universal-bookmarks/actions/workflows/release.yml/badge.svg)](https://github.com/we11adam/alfred-universal-bookmarks/actions/workflows/release.yml)
+
 English | [简体中文](README_zh-CN.md)
 
 A blazing-fast Alfred Workflow written in Rust that allows you to search bookmarks across all your installed browsers simultaneously.

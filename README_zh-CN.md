@@ -1,5 +1,7 @@
 # Alfred Universal Bookmarks
 
+[![Release Alfred Workflow](https://github.com/we11adam/alfred-universal-bookmarks/actions/workflows/release.yml/badge.svg)](https://github.com/we11adam/alfred-universal-bookmarks/actions/workflows/release.yml)
+
 [English](README.md) | 简体中文
 
 一个使用 Rust 编写、速度极快的 Alfred 工作流，让你能够同时搜索所有已安装浏览器中的书签。
