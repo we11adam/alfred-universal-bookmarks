@@ -168,7 +168,18 @@ pub fn extract_bookmarks<'a>() -> Vec<BookmarkEntry<'a>> {
     let mut bookmarks: Vec<BookmarkEntry> = Vec::new();
 
     for (name, path) in BOOKMARK_PROVIDERS {
-        let bookmark_file = Path::new(&home).join(path);
+        let env_var_name = format!("{}_BOOKMARKS_PATH", name.to_uppercase().replace(" ", "_"));
+        let bookmark_file = if let Ok(custom_path) = env::var(&env_var_name) {
+            let parsed_path = if custom_path.starts_with('/') {
+                std::path::PathBuf::from(custom_path)
+            } else {
+                Path::new(&home).join(custom_path)
+            };
+            eprintln!("Using custom path for {}: {}", name, parsed_path.display());
+            parsed_path
+        } else {
+            Path::new(&home).join(path)
+        };
         let mut collector: Box<dyn Collector<'a>> = if *name == "Safari" {
             Box::new(SafariCollector::new())
         } else {
