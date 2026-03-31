@@ -29,6 +29,17 @@ Universal Bookmarks currently supports:
 - **Comet**
 - **Helium**
 
+### Custom Bookmarks Path
+
+If your bookmarks file is located in a non-standard directory (e.g., using a specific browser profile), you can override the default search path using environment variables in the workflow configuration.
+
+Set an environment variable following the pattern `{BROWSER_NAME}_BOOKMARKS_PATH`. The browser name must be in uppercase, with any spaces replaced by underscores. If you provide a relative path, it will be automatically resolved relative to your `$HOME` directory.
+
+**Examples:**
+- `SAFARI_BOOKMARKS_PATH=/custom/absolute/path/to/Bookmarks.plist`
+- `GOOGLE_CHROME_BOOKMARKS_PATH=Library/Application Support/Google/Chrome/Profile 1/Bookmarks`
+- `BRAVE_BETA_BOOKMARKS_PATH=/Volumes/ExternalData/Brave/Bookmarks`
+
 ## Installation
 Go to the [releases](https://github.com/we11adam/alfred-universal-bookmarks/releases) page, click on the UniversalBookmarks.alfredworkflow file to download it. Then, double-click the file to import it into Alfred.
 
