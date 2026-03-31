@@ -1,5 +1,7 @@
 # Alfred Universal Bookmarks
 
+English | [简体中文](README_zh-CN.md)
+
 A blazing-fast Alfred Workflow written in Rust that allows you to search bookmarks across all your installed browsers simultaneously.
 
 ## Features
