@@ -69,15 +69,15 @@ impl<'a> ChromiumCollector<'a> {
         path: String,
         matches: &mut Vec<BookmarkEntry<'a>>,
     ) {
-        if entry.r#type == ChromiumEntryItemType::Url {
-            if let Some(ref url) = entry.url {
-                matches.push(BookmarkEntry::new(
-                    entry.name.clone(),
-                    url.clone(),
-                    path.clone(),
-                    self.source.to_string(),
-                ));
-            }
+        if entry.r#type == ChromiumEntryItemType::Url
+            && let Some(ref url) = entry.url
+        {
+            matches.push(BookmarkEntry::new(
+                entry.name.clone(),
+                url.clone(),
+                path.clone(),
+                self.source.to_string(),
+            ));
         }
 
         if let Some(ref children) = entry.children {
