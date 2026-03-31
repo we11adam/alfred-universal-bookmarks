@@ -3,7 +3,7 @@ name: Release Alfred Workflow
 on:
   push:
     tags:
-      - 'v*' # Trigger on version tags
+      - "v*" # Trigger on version tags
   workflow_dispatch: # Allow manual trigger
 
 jobs:
@@ -14,7 +14,7 @@ jobs:
       contents: write # Needed to create a GitHub Release
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -31,31 +31,60 @@ jobs:
         run: |
           lipo -create -output ub target/x86_64-apple-darwin/release/ub target/aarch64-apple-darwin/release/ub
 
-      - name: Package Alfred Workflow
+      - name: Extract Version
+        id: extract_version
         run: |
-          mkdir -p package
-          cp ub package/
-          cp info.plist package/
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          else
+            VERSION=$(echo "${{ github.sha }}" | cut -c1-7)
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-          # Add icon if it exists
+      - name: Package Alfred Workflows
+        run: |
+          mkdir -p package-universal package-amd64 package-arm64
+
+          # Copy common files
+          cp info.plist package-universal/
+          cp info.plist package-amd64/
+          cp info.plist package-arm64/
+
           if [ -f "icon.png" ]; then
-            cp icon.png package/
+            cp icon.png package-universal/
+            cp icon.png package-amd64/
+            cp icon.png package-arm64/
           fi
 
-          cd package
-          zip -r ../UniversalBookmarks.alfredworkflow .
+          # Universal
+          cp ub package-universal/
+          cd package-universal
+          zip -r ../UniversalBookmarks-${{ env.VERSION }}-universal.alfredworkflow .
+          cd ..
 
-      - name: Upload Workflow Artifact
+          # AMD64
+          cp target/x86_64-apple-darwin/release/ub package-amd64/ub
+          cd package-amd64
+          zip -r ../UniversalBookmarks-${{ env.VERSION }}-amd64.alfredworkflow .
+          cd ..
+
+          # ARM64
+          cp target/aarch64-apple-darwin/release/ub package-arm64/ub
+          cd package-arm64
+          zip -r ../UniversalBookmarks-${{ env.VERSION }}-arm64.alfredworkflow .
+          cd ..
+
+      - name: Upload Workflow Artifacts
         uses: actions/upload-artifact@v6
         with:
-          name: UniversalBookmarks.alfredworkflow
-          path: UniversalBookmarks.alfredworkflow
+          name: UniversalBookmarks-Workflows
+          path: UniversalBookmarks-*.alfredworkflow
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: UniversalBookmarks.alfredworkflow
+          files: UniversalBookmarks-*.alfredworkflow
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
