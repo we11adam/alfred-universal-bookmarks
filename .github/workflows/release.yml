@@ -74,11 +74,23 @@ jobs:
           zip -r ../UniversalBookmarks-${{ env.VERSION }}-arm64.alfredworkflow .
           cd ..
 
-      - name: Upload Workflow Artifacts
+      - name: Upload Universal Workflow
         uses: actions/upload-artifact@v6
         with:
-          name: UniversalBookmarks-Workflows
-          path: UniversalBookmarks-*.alfredworkflow
+          name: UniversalBookmarks-${{ env.VERSION }}-universal.alfredworkflow
+          path: UniversalBookmarks-${{ env.VERSION }}-universal.alfredworkflow
+
+      - name: Upload AMD64 Workflow
+        uses: actions/upload-artifact@v6
+        with:
+          name: UniversalBookmarks-${{ env.VERSION }}-amd64.alfredworkflow
+          path: UniversalBookmarks-${{ env.VERSION }}-amd64.alfredworkflow
+
+      - name: Upload ARM64 Workflow
+        uses: actions/upload-artifact@v6
+        with:
+          name: UniversalBookmarks-${{ env.VERSION }}-arm64.alfredworkflow
+          path: UniversalBookmarks-${{ env.VERSION }}-arm64.alfredworkflow
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
