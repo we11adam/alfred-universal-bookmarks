@@ -1,18 +1,19 @@
 use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
 
 pub const PATH_SPLIT: &str = " » ";
 
-#[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
-pub struct BookmarkEntry<'a> {
-    pub name: Cow<'a, str>,
-    pub url: Cow<'a, str>,
-    pub path: Cow<'a, str>,
-    pub source: Cow<'a, str>,
+#[derive(
+    Debug, Serialize, Deserialize, rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Eq, PartialEq,
+)]
+pub struct BookmarkEntry {
+    pub name: String,
+    pub url: String,
+    pub path: String,
+    pub source: String,
 }
 
-impl<'a> BookmarkEntry<'a> {
-    pub fn new<S: Into<Cow<'a, str>>>(name: S, url: S, path: S, source: S) -> BookmarkEntry<'a> {
+impl BookmarkEntry {
+    pub fn new<S: Into<String>>(name: S, url: S, path: S, source: S) -> BookmarkEntry {
         Self {
             name: name.into(),
             url: url.into(),

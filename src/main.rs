@@ -1,3 +1,4 @@
+mod cache;
 mod extractor;
 mod types;
 use crate::types::*;
@@ -56,11 +57,11 @@ fn search(keyword: &str) {
 
 fn build_item<'a>(bookmark: &'a BookmarkEntry) -> Item<'a> {
     let subtitle =
-        bookmark.source.to_string() + PATH_SPLIT + bookmark.path.as_ref() + bookmark.url.as_ref();
-    ItemBuilder::new(bookmark.name.as_ref())
+        bookmark.source.clone() + PATH_SPLIT + bookmark.path.as_str() + bookmark.url.as_str();
+    ItemBuilder::new(bookmark.name.as_str())
         .subtitle(subtitle)
-        .arg(bookmark.url.as_ref())
-        .uid(bookmark.url.as_ref())
+        .arg(bookmark.url.as_str())
+        .uid(bookmark.url.as_str())
         .icon_path("./icon.png")
         .into_item()
 }

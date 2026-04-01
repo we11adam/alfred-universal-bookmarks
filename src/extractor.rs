@@ -5,7 +5,7 @@ use std::fs::File;
 use std::path::Path;
 
 trait Collector<'a> {
-    fn collect(&mut self, path: &Path, matches: &mut Vec<BookmarkEntry<'a>>);
+    fn collect(&mut self, path: &Path, matches: &mut Vec<BookmarkEntry>);
 }
 
 struct ChromiumCollector<'a> {
@@ -13,7 +13,7 @@ struct ChromiumCollector<'a> {
 }
 
 impl<'a> Collector<'a> for ChromiumCollector<'a> {
-    fn collect(&mut self, path: &Path, matches: &mut Vec<BookmarkEntry<'a>>) {
+    fn collect(&mut self, path: &Path, matches: &mut Vec<BookmarkEntry>) {
         let Ok(file) = File::open(path) else {
             return;
         };
@@ -48,7 +48,7 @@ impl<'a> ChromiumCollector<'a> {
         }
     }
 
-    fn extract_all(&mut self, bookmarks: &ChromiumBookmarks, matches: &mut Vec<BookmarkEntry<'a>>) {
+    fn extract_all(&mut self, bookmarks: &ChromiumBookmarks, matches: &mut Vec<BookmarkEntry>) {
         let mut roots = Vec::from([
             &bookmarks.roots.bookmark_bar,
             &bookmarks.roots.other,
@@ -63,12 +63,7 @@ impl<'a> ChromiumCollector<'a> {
         }
     }
 
-    fn extract(
-        &mut self,
-        entry: &ChromiumEntry,
-        path: String,
-        matches: &mut Vec<BookmarkEntry<'a>>,
-    ) {
+    fn extract(&mut self, entry: &ChromiumEntry, path: String, matches: &mut Vec<BookmarkEntry>) {
         if entry.r#type == ChromiumEntryItemType::Url
             && let Some(ref url) = entry.url
         {
@@ -94,7 +89,7 @@ struct SafariCollector<'a> {
 }
 
 impl<'a> Collector<'a> for SafariCollector<'a> {
-    fn collect(&mut self, path: &Path, matches: &mut Vec<BookmarkEntry<'a>>) {
+    fn collect(&mut self, path: &Path, matches: &mut Vec<BookmarkEntry>) {
         self.extract_all(path, matches);
         eprintln!("Extracted {} entries from {}", matches.len(), self.source);
     }
@@ -107,7 +102,7 @@ impl<'a> SafariCollector<'a> {
         }
     }
 
-    fn extract_all(&mut self, path: &Path, matches: &mut Vec<BookmarkEntry<'a>>) {
+    fn extract_all(&mut self, path: &Path, matches: &mut Vec<BookmarkEntry>) {
         let raw_bookmarks: Result<SafariBookmarks, plist::Error> = plist::from_file(path);
 
         let raw_bookmarks = match raw_bookmarks {
@@ -125,7 +120,7 @@ impl<'a> SafariCollector<'a> {
         }
     }
 
-    fn extract(&mut self, entry: SafariEntry, path: String, matches: &mut Vec<BookmarkEntry<'a>>) {
+    fn extract(&mut self, entry: SafariEntry, path: String, matches: &mut Vec<BookmarkEntry>) {
         match entry.web_bookmark_type {
             SafariEntryType::WebBookmarkTypeLeaf => {
                 if let Some(url) = entry.url_string {
@@ -159,7 +154,7 @@ impl<'a> SafariCollector<'a> {
     }
 }
 
-pub fn extract_bookmarks<'a>() -> Vec<BookmarkEntry<'a>> {
+pub fn extract_bookmarks() -> Vec<BookmarkEntry> {
     let Ok(home) = env::var("HOME") else {
         eprintln!("Failed to get HOME environment variable");
         return Vec::new();
@@ -168,7 +163,7 @@ pub fn extract_bookmarks<'a>() -> Vec<BookmarkEntry<'a>> {
     let mut bookmarks: Vec<BookmarkEntry> = Vec::new();
 
     for (name, path) in BOOKMARK_PROVIDERS {
-        let env_var_name = format!("{}_BOOKMARKS_PATH", name.to_uppercase().replace(" ", "_"));
+        let env_var_name = format!("{}_BOOKMARKS_PATH", name.to_uppercase().replace(' ', "_"));
         let bookmark_file = if let Ok(custom_path) = env::var(&env_var_name) {
             let parsed_path = if custom_path.starts_with('/') {
                 std::path::PathBuf::from(custom_path)
@@ -180,12 +175,27 @@ pub fn extract_bookmarks<'a>() -> Vec<BookmarkEntry<'a>> {
         } else {
             Path::new(&home).join(path)
         };
-        let mut collector: Box<dyn Collector<'a>> = if *name == "Safari" {
-            Box::new(SafariCollector::new())
-        } else {
-            Box::new(ChromiumCollector::new(Cow::Borrowed(*name)))
-        };
-        collector.collect(&bookmark_file, &mut bookmarks);
+
+        // Skip providers whose bookmark file doesn't exist at all.
+        if !bookmark_file.exists() {
+            continue;
+        }
+
+        let provider_name = *name;
+        let bookmark_file_clone = bookmark_file.clone();
+
+        let entries = crate::cache::get_or_update(provider_name, &bookmark_file, move || {
+            let mut collector: Box<dyn Collector<'_>> = if provider_name == "Safari" {
+                Box::new(SafariCollector::new())
+            } else {
+                Box::new(ChromiumCollector::new(Cow::Owned(provider_name.to_owned())))
+            };
+            let mut result = Vec::new();
+            collector.collect(&bookmark_file_clone, &mut result);
+            result
+        });
+
+        bookmarks.extend(entries);
     }
 
     bookmarks
