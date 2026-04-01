@@ -57,7 +57,7 @@ release NEW_VERSION: check
     git add Cargo.toml Cargo.lock
     git commit -m "chore: bump version to v{{NEW_VERSION}}"
 
-    echo "🏷️  Creating git tag..."
+    echo "🏷️ Creating git tag..."
     git tag -a "v{{NEW_VERSION}}" -m "Release v{{NEW_VERSION}}"
 
     echo "✅ Release ready!"
