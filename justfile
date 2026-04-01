@@ -23,6 +23,10 @@ dev:
     cargo build
     mv target/debug/ub .
 
+rls:
+    cargo build --release
+    mv target/release/ub .
+
 # Release a new version (e.g. `just release 1.0.1`), updates config, commits, and tags
 release NEW_VERSION: check
     #!/usr/bin/env bash
