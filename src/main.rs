@@ -55,7 +55,7 @@ fn search(keyword: &str) {
     let _ = json::write_items(io::stdout(), &name_matches);
 }
 
-fn build_item<'a>(bookmark: &'a BookmarkEntry) -> Item<'a> {
+fn build_item(bookmark: &'_ BookmarkEntry) -> Item<'_> {
     let subtitle =
         bookmark.source.clone() + PATH_SPLIT + bookmark.path.as_str() + bookmark.url.as_str();
     ItemBuilder::new(bookmark.name.as_str())
