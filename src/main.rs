@@ -26,11 +26,7 @@ fn main() {
             updater::run();
         }
         "version" => {
-            println!(
-                "{} ({})",
-                env!("CARGO_PKG_VERSION"),
-                env!("GIT_COMMIT"),
-            );
+            println!("{} ({})", env!("CARGO_PKG_VERSION"), env!("GIT_COMMIT"),);
         }
         _ => {
             eprintln!("Unsupported action: {}", action);

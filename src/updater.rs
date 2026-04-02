@@ -211,9 +211,7 @@ fn detect_arch() -> String {
         .output();
 
     let archs = match output {
-        Ok(o) if o.status.success() => {
-            String::from_utf8_lossy(&o.stdout).trim().to_string()
-        }
+        Ok(o) if o.status.success() => String::from_utf8_lossy(&o.stdout).trim().to_string(),
         _ => return "unknown".into(),
     };
 
@@ -257,12 +255,34 @@ fn find_workflow_asset(json: &str, arch: &str) -> Option<String> {
     preferred.or(fallback)
 }
 
+/// Helper to read proxy settings from environment and apply them to the given Command.
+fn apply_proxy_envs(cmd: &mut Command) {
+    let vars = [
+        "https_proxy",
+        "HTTPS_PROXY",
+        "http_proxy",
+        "HTTP_PROXY",
+        "all_proxy",
+        "ALL_PROXY",
+    ];
+    for var in vars {
+        if let Ok(val) = env::var(var) {
+            let val = val.trim();
+            if !val.is_empty() {
+                cmd.env(var, val);
+            }
+        }
+    }
+}
+
 /// Fetch a URL using /usr/bin/curl (available on all macOS).
 fn fetch_url(url: &str) -> Option<String> {
-    let output = Command::new("/usr/bin/curl")
-        .args(["-sL", "--max-time", "10", url])
-        .output()
-        .ok()?;
+    let mut cmd = Command::new("/usr/bin/curl");
+    cmd.args(["-sL", "--max-time", "10"]);
+
+    apply_proxy_envs(&mut cmd);
+
+    let output = cmd.arg(url).output().ok()?;
     if output.status.success() {
         Some(String::from_utf8_lossy(&output.stdout).into_owned())
     } else {
@@ -272,8 +292,13 @@ fn fetch_url(url: &str) -> Option<String> {
 
 /// Download a file using /usr/bin/curl.
 fn download_file(url: &str, dest: &str) -> Result<(), String> {
-    let status = Command::new("/usr/bin/curl")
-        .args(["-sL", "--max-time", "60", url, "-o", dest])
+    let mut cmd = Command::new("/usr/bin/curl");
+    cmd.args(["-sL", "--max-time", "60"]);
+
+    apply_proxy_envs(&mut cmd);
+
+    let status = cmd
+        .args([url, "-o", dest])
         .status()
         .map_err(|e| e.to_string())?;
     if status.success() {

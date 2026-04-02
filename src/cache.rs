@@ -30,9 +30,8 @@ pub fn get_or_update(
     let cache_file = cache_dir.join(format!("{}.rkyv", provider_name.replace(' ', "_")));
 
     // ── 1. Read both mtimes ──────────────────────────────────────────────────
-    let mtime = |p: &Path| -> Option<SystemTime> {
-        fs::metadata(p).and_then(|m| m.modified()).ok()
-    };
+    let mtime =
+        |p: &Path| -> Option<SystemTime> { fs::metadata(p).and_then(|m| m.modified()).ok() };
 
     // ── 2. Cache hit when the .rkyv file is at least as new as the source ───
     if let (Some(src_mtime), Some(cache_mtime)) = (mtime(bookmark_path), mtime(&cache_file))
@@ -40,7 +39,11 @@ pub fn get_or_update(
     {
         match fs::read(&cache_file).map(|b| rkyv::from_bytes::<Vec<BookmarkEntry>, Error>(&b)) {
             Ok(Ok(entries)) => {
-                eprintln!("[cache] HIT  {} ({} bookmarks)", provider_name, entries.len());
+                eprintln!(
+                    "[cache] HIT  {} ({} bookmarks)",
+                    provider_name,
+                    entries.len()
+                );
                 return entries;
             }
             Ok(Err(e)) => eprintln!("[cache] Deserialise failed for {}: {}", provider_name, e),
