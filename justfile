@@ -54,11 +54,14 @@ release NEW_VERSION: check
     # Note: 'cargo set-version {{NEW_VERSION}}' from cargo-edit is also popular, but sed requires zero dependencies.
     sed -i '' -e 's/^version = ".*"/version = "{{NEW_VERSION}}"/' Cargo.toml
 
+    # 2b. Update version in info.plist (for OneUpdater version comparison)
+    /usr/libexec/PlistBuddy -c "Set :version {{NEW_VERSION}}" info.plist
+
     # 3. Update Cargo.lock to sync the new version
     cargo update -p alfred-universal-bookmarks || true
 
     echo "📦 Committing version bump..."
-    git add Cargo.toml Cargo.lock
+    git add Cargo.toml Cargo.lock info.plist
     git commit -m "chore: bump version to v{{NEW_VERSION}}"
 
     echo "🏷️ Creating git tag..."

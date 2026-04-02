@@ -56,6 +56,11 @@ jobs:
             cp icon.png package-arm64/
           fi
 
+          # Copy updater script
+          cp updater.sh package-universal/
+          cp updater.sh package-amd64/
+          cp updater.sh package-arm64/
+
           # Universal
           cp ub package-universal/
           cd package-universal

@@ -43,6 +43,16 @@
 				<key>vitoclose</key>
 				<false/>
 			</dict>
+			<dict>
+				<key>destinationuid</key>
+				<string>F7A8B9C0-D1E2-4F3A-5B6C-7D8E9F0A1B2C</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
 		</array>
 		<key>8734AA64-95C2-4286-BBA4-7734583B1641</key>
 		<array>
@@ -81,27 +91,6 @@
 	<string>Universal Bookmarks</string>
 	<key>objects</key>
 	<array>
-		<dict>
-			<key>config</key>
-			<dict>
-				<key>browser</key>
-				<string></string>
-				<key>skipqueryencode</key>
-				<true/>
-				<key>skipvarencode</key>
-				<true/>
-				<key>spaces</key>
-				<string></string>
-				<key>url</key>
-				<string>{var:url}</string>
-			</dict>
-			<key>type</key>
-			<string>alfred.workflow.action.openurl</string>
-			<key>uid</key>
-			<string>C3A3CB21-6F97-4B80-9885-2979AEAB6F2B</string>
-			<key>version</key>
-			<integer>1</integer>
-		</dict>
 		<dict>
 			<key>config</key>
 			<dict>
@@ -154,21 +143,21 @@
 		<dict>
 			<key>config</key>
 			<dict>
-				<key>delimiter</key>
-				<string>|</string>
-				<key>discardemptyarguments</key>
-				<false/>
-				<key>outputas</key>
-				<integer>0</integer>
-				<key>trimarguments</key>
+				<key>browser</key>
+				<string></string>
+				<key>skipqueryencode</key>
 				<true/>
-				<key>variableprefix</key>
-				<string>linkinfo</string>
+				<key>skipvarencode</key>
+				<true/>
+				<key>spaces</key>
+				<string></string>
+				<key>url</key>
+				<string>{var:url}</string>
 			</dict>
 			<key>type</key>
-			<string>alfred.workflow.utility.split</string>
+			<string>alfred.workflow.action.openurl</string>
 			<key>uid</key>
-			<string>2E802FCB-9F21-4B19-A562-7AF914034992</string>
+			<string>C3A3CB21-6F97-4B80-9885-2979AEAB6F2B</string>
 			<key>version</key>
 			<integer>1</integer>
 		</dict>
@@ -191,6 +180,27 @@
 			<string>alfred.workflow.utility.argument</string>
 			<key>uid</key>
 			<string>8734AA64-95C2-4286-BBA4-7734583B1641</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>delimiter</key>
+				<string>|</string>
+				<key>discardemptyarguments</key>
+				<false/>
+				<key>outputas</key>
+				<integer>0</integer>
+				<key>trimarguments</key>
+				<true/>
+				<key>variableprefix</key>
+				<string>linkinfo</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.utility.split</string>
+			<key>uid</key>
+			<string>2E802FCB-9F21-4B19-A562-7AF914034992</string>
 			<key>version</key>
 			<integer>1</integer>
 		</dict>
@@ -233,6 +243,29 @@
 			<string>E191EA6D-05CC-44F7-B2DC-8BBBF939D3E9</string>
 			<key>version</key>
 			<integer>3</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<true/>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>script</key>
+				<string>./updater.sh &amp;</string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>F7A8B9C0-D1E2-4F3A-5B6C-7D8E9F0A1B2C</string>
+			<key>version</key>
+			<integer>2</integer>
 		</dict>
 	</array>
 	<key>readme</key>
@@ -281,9 +314,27 @@
 			<key>ypos</key>
 			<real>280</real>
 		</dict>
+		<key>F7A8B9C0-D1E2-4F3A-5B6C-7D8E9F0A1B2C</key>
+		<dict>
+			<key>xpos</key>
+			<real>320</real>
+			<key>ypos</key>
+			<real>280</real>
+		</dict>
 	</dict>
 	<key>userconfigurationconfig</key>
 	<array/>
+	<key>variables</key>
+	<dict>
+		<key>UPDATER_DEBUG</key>
+		<string>0</string>
+	</dict>
+	<key>variablesdontexport</key>
+	<array>
+		<string>UPDATER_DEBUG</string>
+	</array>
+	<key>version</key>
+	<string>0.0.7</string>
 	<key>webaddress</key>
 	<string>https://github.com/we11adam/alfred-universal-bookmarks</string>
 </dict>
