@@ -1,0 +1,339 @@
+//! Auto-update mechanism for Universal Bookmarks Alfred Workflow.
+//!
+//! Inspired by OneUpdater. Checks GitHub Releases for a newer version and, if found,
+//! downloads the `.alfredworkflow` package and opens it to trigger Alfred's import dialog.
+//!
+//! # Environment variables (set via Alfred workflow variables)
+//! - `UPDATER_DEBUG` – set to `"1"` to write verbose logs to `<cache_dir>/updater.log`
+//! - `alfred_workflow_cache` – Alfred injects this automatically at runtime
+
+use std::env;
+use std::fs;
+use std::io::Write;
+use std::path::{Path, PathBuf};
+use std::process::Command;
+use std::time::{SystemTime, UNIX_EPOCH};
+
+// ── Configuration ────────────────────────────────────────────────────────────
+const REPO: &str = "we11adam/alfred-universal-bookmarks";
+const FREQUENCY_DAYS: u64 = 7;
+const LAST_CHECK_FILE: &str = ".last_update_check";
+const LOG_FILE: &str = "updater.log";
+const MAX_LOG_BYTES: u64 = 512 * 1024; // 512 KB
+
+/// Run the full update-check workflow. This is designed to be called from a
+/// background process (`./ub update &`) so it must never panic or block the
+/// main search flow.
+pub fn run() {
+    let debug = env::var("UPDATER_DEBUG").unwrap_or_default() == "1";
+    let cache_dir = resolve_cache_dir();
+
+    let mut logger = Logger::new(debug, &cache_dir);
+    logger.log("── updater started ──────────────────────────────");
+
+    if let Err(e) = fs::create_dir_all(&cache_dir) {
+        logger.log(&format!("ERROR: failed to create cache dir: {e}"));
+        return;
+    }
+
+    // ── Frequency gate ───────────────────────────────────────────────────────
+    let check_file = cache_dir.join(LAST_CHECK_FILE);
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+
+    if let Ok(contents) = fs::read_to_string(&check_file) {
+        if let Ok(last_check) = contents.trim().parse::<u64>() {
+            let days_elapsed = (now - last_check) / 86400;
+            logger.log(&format!(
+                "last check: {last_check}, now: {now}, days elapsed: {days_elapsed}, frequency: {FREQUENCY_DAYS}"
+            ));
+            if days_elapsed < FREQUENCY_DAYS {
+                logger.log(&format!(
+                    "skipping: next check in {} day(s)",
+                    FREQUENCY_DAYS - days_elapsed
+                ));
+                return;
+            }
+        }
+    } else {
+        logger.log("no previous check recorded, proceeding");
+    }
+
+    // Record this check
+    let _ = fs::write(&check_file, now.to_string());
+
+    // ── Get local version ────────────────────────────────────────────────────
+    let local_version = env!("CARGO_PKG_VERSION");
+    logger.log(&format!("local version: {local_version}"));
+
+    // ── Fetch latest release from GitHub ──────────────────────────────────────
+    let api_url = format!("https://api.github.com/repos/{REPO}/releases/latest");
+    logger.log(&format!("fetching: {api_url}"));
+
+    let release_json = match fetch_url(&api_url) {
+        Some(body) => body,
+        None => {
+            logger.log("ERROR: failed to fetch release info from GitHub");
+            return;
+        }
+    };
+
+    // ── Parse remote version ─────────────────────────────────────────────────
+    let remote_version = match extract_json_string(&release_json, "tag_name") {
+        Some(tag) => tag.trim_start_matches('v').to_string(),
+        None => {
+            logger.log("ERROR: cannot parse tag_name from response");
+            return;
+        }
+    };
+    logger.log(&format!("remote version: {remote_version}"));
+
+    // ── Compare versions ─────────────────────────────────────────────────────
+    if local_version == remote_version {
+        logger.log(&format!("up to date ({local_version})"));
+        return;
+    }
+
+    if !is_newer(&remote_version, local_version) {
+        logger.log(&format!(
+            "local ({local_version}) is newer than remote ({remote_version}), skipping"
+        ));
+        return;
+    }
+
+    logger.log(&format!(
+        "update available: {local_version} → {remote_version}"
+    ));
+
+    // ── Detect binary architecture ───────────────────────────────────────────
+    let arch = detect_arch();
+    logger.log(&format!("binary architecture: {arch}"));
+
+    // ── Find download URL ────────────────────────────────────────────────────
+    let download_url = match find_workflow_asset(&release_json, &arch) {
+        Some(url) => url,
+        None => {
+            logger.log("ERROR: no .alfredworkflow asset in release");
+            return;
+        }
+    };
+    logger.log(&format!("download URL: {download_url}"));
+
+    // ── Download ─────────────────────────────────────────────────────────────
+    let tmp_path = "/tmp/UniversalBookmarks-latest.alfredworkflow";
+    logger.log(&format!("downloading to {tmp_path}..."));
+
+    match download_file(&download_url, tmp_path) {
+        Ok(_) => {}
+        Err(e) => {
+            logger.log(&format!("ERROR: download failed: {e}"));
+            return;
+        }
+    }
+
+    // ── Install ──────────────────────────────────────────────────────────────
+    logger.log(&format!("opening {tmp_path} for Alfred import"));
+    let _ = Command::new("open").arg(tmp_path).status();
+
+    logger.log("── updater finished ─────────────────────────────");
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+/// Resolve the cache directory. Alfred sets `alfred_workflow_cache` at runtime;
+/// fall back to the conventional path using the bundle id.
+fn resolve_cache_dir() -> PathBuf {
+    if let Ok(dir) = env::var("alfred_workflow_cache") {
+        return PathBuf::from(dir);
+    }
+
+    // Fallback: read bundle id from info.plist next to the binary
+    let bundle_id = read_bundle_id().unwrap_or_else(|| "com.welladam.universalbookmarks".into());
+    let home = env::var("HOME").unwrap_or_else(|_| "/tmp".into());
+
+    PathBuf::from(home)
+        .join("Library/Caches/com.runningwithcrayons.Alfred/Workflow Data")
+        .join(bundle_id)
+}
+
+/// Best-effort read of bundleid from info.plist in the working directory.
+fn read_bundle_id() -> Option<String> {
+    let output = Command::new("/usr/libexec/PlistBuddy")
+        .args(["-c", "Print :bundleid", "info.plist"])
+        .output()
+        .ok()?;
+    if output.status.success() {
+        Some(String::from_utf8_lossy(&output.stdout).trim().to_string())
+    } else {
+        None
+    }
+}
+
+/// Simple semver comparison: returns true if `remote` is strictly newer than `local`.
+fn is_newer(remote: &str, local: &str) -> bool {
+    let parse = |v: &str| -> Vec<u64> {
+        v.split('.')
+            .map(|s| s.parse::<u64>().unwrap_or(0))
+            .collect()
+    };
+    let r = parse(remote);
+    let l = parse(local);
+    r > l
+}
+
+/// Minimal JSON string extraction without a JSON library dependency.
+/// Finds `"key": "value"` and returns value.
+fn extract_json_string(json: &str, key: &str) -> Option<String> {
+    let pattern = format!("\"{}\"", key);
+    let pos = json.find(&pattern)?;
+    let after_key = &json[pos + pattern.len()..];
+    // Skip colon and whitespace
+    let after_colon = after_key.trim_start().strip_prefix(':')?;
+    let after_ws = after_colon.trim_start();
+    // Value should start with a quote
+    let after_quote = after_ws.strip_prefix('"')?;
+    let end = after_quote.find('"')?;
+    Some(after_quote[..end].to_string())
+}
+
+/// Detect the architecture of the currently running binary using `lipo -archs`.
+/// Returns "arm64", "amd64", "universal", or "unknown".
+fn detect_arch() -> String {
+    let exe = match env::current_exe() {
+        Ok(p) => p,
+        Err(_) => return "unknown".into(),
+    };
+
+    let output = Command::new("/usr/bin/lipo")
+        .args(["-archs", &exe.to_string_lossy()])
+        .output();
+
+    let archs = match output {
+        Ok(o) if o.status.success() => {
+            String::from_utf8_lossy(&o.stdout).trim().to_string()
+        }
+        _ => return "unknown".into(),
+    };
+
+    // lipo -archs returns space-separated list, e.g. "x86_64 arm64"
+    if archs.contains("x86_64") && archs.contains("arm64") {
+        "universal".into()
+    } else if archs.contains("arm64") {
+        "arm64".into()
+    } else if archs.contains("x86_64") {
+        "amd64".into()
+    } else {
+        "unknown".into()
+    }
+}
+
+/// Find the best `.alfredworkflow` download URL from release JSON.
+/// Matches the binary architecture: arm64 → arm64 asset, amd64 → amd64 asset,
+/// universal → universal asset. Falls back to any `.alfredworkflow` if no match.
+fn find_workflow_asset(json: &str, arch: &str) -> Option<String> {
+    let mut preferred: Option<String> = None;
+    let mut fallback: Option<String> = None;
+
+    let search = "\"browser_download_url\"";
+    let mut start = 0;
+    while let Some(pos) = json[start..].find(search) {
+        let abs_pos = start + pos;
+        if let Some(url) = extract_json_string(&json[abs_pos..], "browser_download_url")
+            && url.ends_with(".alfredworkflow")
+        {
+            // Match architecture keyword in the asset filename
+            if preferred.is_none() && url.contains(arch) {
+                preferred = Some(url.clone());
+            }
+            if fallback.is_none() {
+                fallback = Some(url);
+            }
+        }
+        start = abs_pos + search.len();
+    }
+
+    preferred.or(fallback)
+}
+
+/// Fetch a URL using /usr/bin/curl (available on all macOS).
+fn fetch_url(url: &str) -> Option<String> {
+    let output = Command::new("/usr/bin/curl")
+        .args(["-sL", "--max-time", "10", url])
+        .output()
+        .ok()?;
+    if output.status.success() {
+        Some(String::from_utf8_lossy(&output.stdout).into_owned())
+    } else {
+        None
+    }
+}
+
+/// Download a file using /usr/bin/curl.
+fn download_file(url: &str, dest: &str) -> Result<(), String> {
+    let status = Command::new("/usr/bin/curl")
+        .args(["-sL", "--max-time", "60", url, "-o", dest])
+        .status()
+        .map_err(|e| e.to_string())?;
+    if status.success() {
+        // Verify file is non-empty
+        let meta = fs::metadata(dest).map_err(|e| e.to_string())?;
+        if meta.len() == 0 {
+            return Err("downloaded file is empty".into());
+        }
+        Ok(())
+    } else {
+        Err(format!("curl exited with {status}"))
+    }
+}
+
+// ── Logger ───────────────────────────────────────────────────────────────────
+
+struct Logger {
+    enabled: bool,
+    path: PathBuf,
+}
+
+impl Logger {
+    fn new(enabled: bool, cache_dir: &Path) -> Self {
+        let path = cache_dir.join(LOG_FILE);
+
+        if enabled {
+            // Truncate log if it exceeds MAX_LOG_BYTES
+            if let Ok(meta) = fs::metadata(&path)
+                && meta.len() > MAX_LOG_BYTES
+                && let Ok(data) = fs::read(&path)
+            {
+                let half = data.len() / 2;
+                let _ = fs::write(&path, &data[half..]);
+            }
+        }
+
+        Self { enabled, path }
+    }
+
+    fn log(&mut self, msg: &str) {
+        if !self.enabled {
+            return;
+        }
+        let timestamp = {
+            // Use date command for human-readable local time (no chrono dependency)
+            Command::new("date")
+                .arg("+%Y-%m-%d %H:%M:%S")
+                .output()
+                .ok()
+                .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+                .unwrap_or_default()
+        };
+        if let Ok(mut file) = fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)
+        {
+            let _ = writeln!(file, "[{timestamp}] {msg}");
+        }
+        // Also write to stderr for manual testing
+        eprintln!("[{timestamp}] {msg}");
+    }
+}

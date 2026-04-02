@@ -1,6 +1,7 @@
 mod cache;
 mod extractor;
 mod types;
+mod updater;
 use crate::types::*;
 use alfred::{Item, ItemBuilder, json};
 use std::{collections::HashSet, env, io};
@@ -8,8 +9,8 @@ use std::{collections::HashSet, env, io};
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    if args.len() < 3 {
-        eprint!("Insufficient arguments provided. Usage: <program> <action> <keyword>");
+    if args.len() < 2 {
+        eprint!("Insufficient arguments provided. Usage: ub <action> [args...]");
         return;
     }
 
@@ -18,8 +19,11 @@ fn main() {
     let action = &args[1];
     match action.as_str() {
         "search" => {
-            let keyword = &args[2];
+            let keyword = args.get(2).map(|s| s.as_str()).unwrap_or("");
             search(keyword);
+        }
+        "update" => {
+            updater::run();
         }
         _ => {
             eprintln!("Unsupported action: {}", action);
