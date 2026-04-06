@@ -1,9 +1,10 @@
 mod cache;
+mod deleter;
 mod extractor;
 mod types;
 mod updater;
 use crate::types::*;
-use alfred::{Item, ItemBuilder, json};
+use alfred::{Item, ItemBuilder, Modifier, json};
 use std::{collections::HashSet, env, io};
 
 fn main() {
@@ -24,6 +25,10 @@ fn main() {
         }
         "update" => {
             updater::run();
+        }
+        "delete" => {
+            let arg = args.get(2).map(|s| s.as_str()).unwrap_or("");
+            deleter::delete(arg);
         }
         "version" => {
             println!("{} ({})", env!("CARGO_PKG_VERSION"), env!("GIT_COMMIT"),);
@@ -65,11 +70,14 @@ fn search(keyword: &str) {
 fn build_item(bookmark: &'_ BookmarkEntry) -> Item<'_> {
     let subtitle =
         bookmark.source.clone() + PATH_SPLIT + bookmark.path.as_str() + bookmark.url.as_str();
+    let delete_arg = format!("{}\t{}", bookmark.source, bookmark.url);
     ItemBuilder::new(bookmark.name.as_str())
         .subtitle(subtitle)
         .arg(bookmark.url.as_str())
         .uid(bookmark.url.as_str())
         .icon_path("./icon.png")
+        .subtitle_mod(Modifier::Command, format!("Delete from {}", bookmark.source))
+        .arg_mod(Modifier::Command, delete_arg)
         .into_item()
 }
 
