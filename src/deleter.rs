@@ -90,11 +90,11 @@ fn delete_chromium_bookmark(bookmark_path: &Path, url: &str) -> Result<(), Strin
 
     let mut found = false;
     for key in &["bookmark_bar", "other", "synced", "workspaces_v2"] {
-        if let Some(root) = roots.get_mut(*key) {
-            if remove_chromium_entry(root, url) {
-                found = true;
-                break;
-            }
+        if let Some(root) = roots.get_mut(*key)
+            && remove_chromium_entry(root, url)
+        {
+            found = true;
+            break;
         }
     }
 
@@ -111,19 +111,17 @@ fn delete_chromium_bookmark(bookmark_path: &Path, url: &str) -> Result<(), Strin
 }
 
 fn remove_chromium_entry(entry: &mut serde_json::Value, url: &str) -> bool {
-    if let Some(children) = entry.get_mut("children") {
-        if let Some(children_arr) = children.as_array_mut() {
-            let orig_len = children_arr.len();
-            children_arr.retain(|child| {
-                child.get("url").and_then(|u| u.as_str()) != Some(url)
-            });
-            if children_arr.len() < orig_len {
+    if let Some(children) = entry.get_mut("children")
+        && let Some(children_arr) = children.as_array_mut()
+    {
+        let orig_len = children_arr.len();
+        children_arr.retain(|child| child.get("url").and_then(|u| u.as_str()) != Some(url));
+        if children_arr.len() < orig_len {
+            return true;
+        }
+        for child in children_arr.iter_mut() {
+            if remove_chromium_entry(child, url) {
                 return true;
-            }
-            for child in children_arr.iter_mut() {
-                if remove_chromium_entry(child, url) {
-                    return true;
-                }
             }
         }
     }
@@ -140,9 +138,7 @@ fn delete_safari_bookmark(bookmark_path: &Path, url: &str) -> Result<(), String>
     let children = dict
         .get_mut("Children")
         .ok_or("No Children key in bookmarks")?;
-    let children_arr = children
-        .as_array_mut()
-        .ok_or("Children is not an array")?;
+    let children_arr = children.as_array_mut().ok_or("Children is not an array")?;
 
     if !remove_safari_entry(children_arr, url) {
         return Err("Bookmark not found".into());
@@ -157,12 +153,11 @@ fn delete_safari_bookmark(bookmark_path: &Path, url: &str) -> Result<(), String>
 fn remove_safari_entry(children: &mut Vec<plist::Value>, url: &str) -> bool {
     let orig_len = children.len();
     children.retain(|child| {
-        if let Some(dict) = child.as_dictionary() {
-            if let Some(url_val) = dict.get("URLString") {
-                if url_val.as_string() == Some(url) {
-                    return false;
-                }
-            }
+        if let Some(dict) = child.as_dictionary()
+            && let Some(url_val) = dict.get("URLString")
+            && url_val.as_string() == Some(url)
+        {
+            return false;
         }
         true
     });
@@ -172,14 +167,12 @@ fn remove_safari_entry(children: &mut Vec<plist::Value>, url: &str) -> bool {
     }
 
     for child in children.iter_mut() {
-        if let Some(dict) = child.as_dictionary_mut() {
-            if let Some(children_val) = dict.get_mut("Children") {
-                if let Some(inner_arr) = children_val.as_array_mut() {
-                    if remove_safari_entry(inner_arr, url) {
-                        return true;
-                    }
-                }
-            }
+        if let Some(dict) = child.as_dictionary_mut()
+            && let Some(children_val) = dict.get_mut("Children")
+            && let Some(inner_arr) = children_val.as_array_mut()
+            && remove_safari_entry(inner_arr, url)
+        {
+            return true;
         }
     }
 

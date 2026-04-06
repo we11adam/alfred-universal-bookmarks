@@ -76,7 +76,10 @@ fn build_item(bookmark: &'_ BookmarkEntry) -> Item<'_> {
         .arg(bookmark.url.as_str())
         .uid(bookmark.url.as_str())
         .icon_path("./icon.png")
-        .subtitle_mod(Modifier::Command, format!("Delete from {}", bookmark.source))
+        .subtitle_mod(
+            Modifier::Command,
+            format!("Delete from {}", bookmark.source),
+        )
         .arg_mod(Modifier::Command, delete_arg)
         .into_item()
 }
