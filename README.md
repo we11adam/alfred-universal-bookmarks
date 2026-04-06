@@ -8,12 +8,14 @@ A blazing-fast Alfred Workflow written in Rust that allows you to search bookmar
 
 ## Features
 
-- ⚡ **Blazing Fast**: Powered by Rust for near-instant searching across thousands of bookmarks.
+- ⚡ **Blazing Fast**: Powered by Rust with rkyv-based caching for near-instant searching across thousands of bookmarks.
 - 🌐 **Multi-Browser Support**: Search bookmarks from Safari, Chrome, Brave, Arc, Edge, and more.
 - 🦄 **Unified Results**: See all your bookmarks in one place, with their source and folder path clearly displayed.
 - 🧹 **Deduplication**: Automatically hides duplicate URLs across different browsers.
--  **Universal Binary**: Supports both Intel-based and Apple Silicon Macs.
+- ✏️ **Delete Bookmarks**: Press `Cmd/Command + Enter` to delete the selected bookmark directly.
+- 🔄 **Auto-Update**: Automatically checks for updates and keeps your workflow up to date.
 - 📎 **Copy to Clipboard**: Use `Alt/Option + Enter` to copy the URL directly to your clipboard.
+-  **Universal Binary**: Supports both Intel-based and Apple Silicon Macs.
 
 ## Supported Browsers
 
@@ -63,6 +65,7 @@ Go to the [releases](https://github.com/we11adam/alfred-universal-bookmarks/rele
 2. Type `ub` followed by your search query.
 3. Press `Enter` to open the bookmark in your default browser.
 4. Press `Alt/Option + Enter` to copy the URL to your clipboard.
+5. Press `Cmd/Command + Enter` to delete the selected bookmark.
 
 ## License
 
