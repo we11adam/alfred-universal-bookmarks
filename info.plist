@@ -367,6 +367,20 @@
 			<key>ypos</key>
 			<real>135</real>
 		</dict>
+		<key>A1B2C3D4-E5F6-4A7B-8C9D-0E1F2A3B4C5D</key>
+		<dict>
+			<key>xpos</key>
+			<real>320</real>
+			<key>ypos</key>
+			<real>420</real>
+		</dict>
+		<key>A2B3C4D5-E6F7-4B8C-9D0E-1F2A3B4C5D6E</key>
+		<dict>
+			<key>xpos</key>
+			<real>625</real>
+			<key>ypos</key>
+			<real>420</real>
+		</dict>
 		<key>C3A3CB21-6F97-4B80-9885-2979AEAB6F2B</key>
 		<dict>
 			<key>xpos</key>
@@ -388,20 +402,6 @@
 			<key>ypos</key>
 			<real>280</real>
 		</dict>
-		<key>A1B2C3D4-E5F6-4A7B-8C9D-0E1F2A3B4C5D</key>
-		<dict>
-			<key>xpos</key>
-			<real>320</real>
-			<key>ypos</key>
-			<real>420</real>
-		</dict>
-		<key>A2B3C4D5-E6F7-4B8C-9D0E-1F2A3B4C5D6E</key>
-		<dict>
-			<key>xpos</key>
-			<real>625</real>
-			<key>ypos</key>
-			<real>420</real>
-		</dict>
 	</dict>
 	<key>userconfigurationconfig</key>
 	<array/>
@@ -415,7 +415,7 @@
 		<string>UPDATER_DEBUG</string>
 	</array>
 	<key>version</key>
-	<string>0.1.0</string>
+	<string>0.1.1</string>
 	<key>webaddress</key>
 	<string>https://github.com/we11adam/alfred-universal-bookmarks</string>
 </dict>
