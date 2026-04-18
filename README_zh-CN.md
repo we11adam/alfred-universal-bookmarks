@@ -64,9 +64,18 @@ Universal Bookmarks 目前支持以下浏览器：
 
 1. 唤出 Alfred。
 2. 输入关键字 `ub` 并加上你要搜索的内容。
+
+搜索行为：
+- 不区分大小写，对名称和 URL 使用子串匹配。
+- 对中文书签名支持拼音匹配：可以输入完整拼音（例如 `gongzuotianbao`）、部分拼音（`zuotian`）、首字母缩写（`gztb`）或混合形式（`gztianbao`）来匹配 “工作填报”。
+- 匹配优先级：名称 → 拼音 → URL。
+
 3. 按下 `Enter` 在默认浏览器中打开该书签。
 4. 按下 `Alt/Option + Enter` 将 URL 复制到剪贴板。
 5. 按下 `Cmd/Command + Enter` 删除选中的书签。
+
+开发（本地运行）：
+- 使用 `rtk cargo test` 运行单元测试，或者使用 `rtk just check`（check 任务现在包含测试，包含拼音相关用例）。
 
 ## 开源协议
 
