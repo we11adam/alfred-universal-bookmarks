@@ -24,6 +24,7 @@ This repo inherits the global command rule from `~/.codex/RTK.md`.
 ## Repository Layout
 
 - `src/main.rs`: CLI dispatcher for `search`, `update`, `delete`, `version`
+- `src/pinyin.rs`: flexible pinyin matching for Chinese bookmarks (full pinyin, initials, mixed).
 - `src/extractor.rs`: reads bookmark files from Safari and Chromium-family browsers
 - `src/cache.rs`: `.cache/*.rkyv` cache read/write and invalidation behavior
 - `src/deleter.rs`: bookmark deletion for Safari plist and Chromium JSON
