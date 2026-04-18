@@ -31,6 +31,16 @@ pub fn run() {
     let mut logger = Logger::new(debug, &cache_dir);
     logger.log("── updater started ──────────────────────────────");
 
+    // If running from a git checkout (development environment), skip auto-update.
+    // This avoids the development workflow attempting to download and install
+    // release assets while developing locally.
+    if let Ok(cwd) = env::current_dir() {
+        if cwd.join(".git").exists() {
+            logger.log("Detected .git in current directory; running in development mode, skipping auto-update");
+            return;
+        }
+    }
+
     if let Err(e) = fs::create_dir_all(&cache_dir) {
         logger.log(&format!("ERROR: failed to create cache dir: {e}"));
         return;
