@@ -17,7 +17,7 @@ fix:
 check:
     cargo check
     cargo clippy -- -D warnings
-    # cargo test # uncomment if tests are added
+    cargo test
 
 dev:
     cargo build

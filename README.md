@@ -63,9 +63,19 @@ Go to the [releases](https://github.com/we11adam/alfred-universal-bookmarks/rele
 
 1. Open Alfred.
 2. Type `ub` followed by your search query.
+
+Search behavior:
+- Case-insensitive name and URL substring matching.
+- Pinyin matching for Chinese bookmark names: type full pinyin (e.g., `gongzuotianbao`), partial pinyin (`zuotian`), initials (`gztb`), or mixed (`gztianbao`) to match `工作填报`.
+- Matching priority: name → pinyin → URL.
+
 3. Press `Enter` to open the bookmark in your default browser.
 4. Press `Alt/Option + Enter` to copy the URL to your clipboard.
 5. Press `Cmd/Command + Enter` to delete the selected bookmark.
+
+Developer (running locally):
+- Run unit tests with `rtk cargo test` or run `rtk just check` (the check recipe now runs tests including pinyin cases).
+
 
 ## License
 

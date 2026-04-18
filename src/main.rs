@@ -1,6 +1,7 @@
 mod cache;
 mod deleter;
 mod extractor;
+mod pinyin;
 mod types;
 mod updater;
 use crate::types::*;
@@ -44,6 +45,7 @@ fn search(keyword: &str) {
     let keyword_lower = keyword.to_lowercase();
 
     let mut name_matches: Vec<Item> = Vec::new();
+    let mut pinyin_matches: Vec<Item> = Vec::new();
     let mut url_matches: Vec<Item> = Vec::new();
 
     for bookmark in &bookmarks {
@@ -52,11 +54,14 @@ fn search(keyword: &str) {
 
         if name_hit {
             name_matches.push(build_item(bookmark));
+        } else if pinyin::pinyin_match(&bookmark.name, &keyword_lower) {
+            pinyin_matches.push(build_item(bookmark));
         } else if url_hit {
             url_matches.push(build_item(bookmark));
         }
     }
 
+    name_matches.append(&mut pinyin_matches);
     name_matches.append(&mut url_matches);
     deduplicate(&mut name_matches);
     eprintln!(
