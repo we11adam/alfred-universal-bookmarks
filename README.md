@@ -75,6 +75,7 @@ Search behavior:
 
 Developer (running locally):
 - Run unit tests with `rtk cargo test` or run `rtk just check` (the check recipe now runs tests including pinyin cases).
+- Development note: When running from a git checkout (a `.git` directory exists in the current working directory), the auto-update check is disabled to avoid downloading and installing releases during local development.
 
 
 ## License
