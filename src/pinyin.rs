@@ -67,7 +67,9 @@ fn match_from(units: &[PyUnit], kw: &[u8]) -> bool {
         PyUnit::Han(full) => {
             let fb = full.as_bytes();
             // Try full pinyin first
-            if kw.len() >= fb.len() && kw[..fb.len()] == *fb && match_from(&units[1..], &kw[fb.len()..])
+            if kw.len() >= fb.len()
+                && kw[..fb.len()] == *fb
+                && match_from(&units[1..], &kw[fb.len()..])
             {
                 return true;
             }
