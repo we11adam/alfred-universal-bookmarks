@@ -69,7 +69,16 @@ fn search(keyword: &str) {
         name_matches.len(),
         keyword
     );
-    let _ = json::write_items(io::stdout(), &name_matches);
+    if name_matches.is_empty() && !keyword.is_empty() {
+        let no_result = ItemBuilder::new("No matching bookmarks")
+            .subtitle(format!("No bookmarks containing \"{}\" were found", keyword))
+            .icon_path("./icon.png")
+            .valid(false)
+            .into_item();
+        let _ = json::write_items(io::stdout(), &[no_result]);
+    } else {
+        let _ = json::write_items(io::stdout(), &name_matches);
+    }
 }
 
 fn build_item(bookmark: &'_ BookmarkEntry) -> Item<'_> {
