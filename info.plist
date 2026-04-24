@@ -103,6 +103,19 @@
 				<false/>
 			</dict>
 		</array>
+		<key>F7A8B9C0-D1E2-4F3A-5B6C-7D8E9F0A1B2C</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>B5C6D7E8-F9A0-4B1C-2D3E-4F5A6B7C8D9E</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
 	</dict>
 	<key>createdby</key>
 	<string>Adam Lau</string>
@@ -271,11 +284,15 @@
 			<key>config</key>
 			<dict>
 				<key>concurrently</key>
-				<true/>
+				<false/>
 				<key>escaping</key>
 				<integer>102</integer>
 				<key>script</key>
-				<string>./ub update &amp;</string>
+				<string>if [[ "$1" == :* ]]; then
+  ./ub cmd "$1"
+else
+  ./ub update &amp;
+fi</string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
 				<key>scriptfile</key>
@@ -333,6 +350,27 @@
 			<string>A1B2C3D4-E5F6-4A7B-8C9D-0E1F2A3B4C5D</string>
 			<key>version</key>
 			<integer>2</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>lastpathcomponent</key>
+				<false/>
+				<key>onlyshowifquerypopulated</key>
+				<true/>
+				<key>removeextension</key>
+				<false/>
+				<key>text</key>
+				<string>{query}</string>
+				<key>title</key>
+				<string>Universal Bookmarks</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.notification</string>
+			<key>uid</key>
+			<string>B5C6D7E8-F9A0-4B1C-2D3E-4F5A6B7C8D9E</string>
+			<key>version</key>
+			<integer>1</integer>
 		</dict>
 	</array>
 	<key>readme</key>
@@ -401,6 +439,13 @@
 			<real>320</real>
 			<key>ypos</key>
 			<real>280</real>
+		</dict>
+		<key>B5C6D7E8-F9A0-4B1C-2D3E-4F5A6B7C8D9E</key>
+		<dict>
+			<key>xpos</key>
+			<real>625</real>
+			<key>ypos</key>
+			<real>560</real>
 		</dict>
 	</dict>
 	<key>userconfigurationconfig</key>

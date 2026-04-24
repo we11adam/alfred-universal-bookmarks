@@ -73,6 +73,11 @@ Search behavior:
 4. Press `Alt/Option + Enter` to copy the URL to your clipboard.
 5. Press `Cmd/Command + Enter` to delete the selected bookmark.
 
+Command mode:
+- Type `ub :` to browse workflow commands.
+- Type `ub :update` to run an immediate update check and, if a newer release exists, download and open the workflow installer.
+- Type `ub :about` to show the current workflow version and embedded git commit.
+
 Developer (running locally):
 - Run unit tests with `rtk cargo test` or run `rtk just check` (the check recipe now runs tests including pinyin cases).
 - Development note: When running from a git checkout (a `.git` directory exists in the current working directory), the auto-update check is disabled to avoid downloading and installing releases during local development.

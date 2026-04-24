@@ -74,6 +74,11 @@ Universal Bookmarks 目前支持以下浏览器：
 4. 按下 `Alt/Option + Enter` 将 URL 复制到剪贴板。
 5. 按下 `Cmd/Command + Enter` 删除选中的书签。
 
+命令模式：
+- 输入 `ub :` 可浏览工作流命令。
+- 输入 `ub :update` 可立即检查更新；如果存在新版本，会下载并打开工作流安装包。
+- 输入 `ub :about` 可显示当前工作流版本以及内嵌的 git commit。
+
 开发（本地运行）：
 - 使用 `rtk cargo test` 运行单元测试，或者使用 `rtk just check`（check 任务现在包含测试，包含拼音相关用例）。
 - 开发提示：当在 git 源代码目录中运行（当前工作目录存在 `.git` 时），自动更新检查将被跳过，以避免在本地开发时意外下载/安装发布包。

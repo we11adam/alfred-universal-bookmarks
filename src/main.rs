@@ -8,6 +8,22 @@ use crate::types::*;
 use alfred::{Item, ItemBuilder, Modifier, json};
 use std::{collections::HashSet, env, io};
 
+struct CommandDef {
+    name: &'static str,
+    subtitle: &'static str,
+}
+
+const COMMANDS: &[CommandDef] = &[
+    CommandDef {
+        name: "update",
+        subtitle: "Check for updates",
+    },
+    CommandDef {
+        name: "about",
+        subtitle: "Show current version",
+    },
+];
+
 fn main() {
     let args: Vec<String> = env::args().collect();
 
@@ -31,6 +47,21 @@ fn main() {
             let arg = args.get(2).map(|s| s.as_str()).unwrap_or("");
             deleter::delete(arg);
         }
+        "cmd" => {
+            let arg = args.get(2).map(|s| s.as_str()).unwrap_or("");
+            let result = match arg.trim_start_matches(':') {
+                "update" => updater::run_once(),
+                "about" => format!(
+                    "Universal Bookmarks v{} ({})",
+                    env!("CARGO_PKG_VERSION"),
+                    env!("GIT_COMMIT")
+                ),
+                _ => String::new(),
+            };
+            if !result.is_empty() {
+                println!("{}", result);
+            }
+        }
         "version" => {
             println!("{} ({})", env!("CARGO_PKG_VERSION"), env!("GIT_COMMIT"),);
         }
@@ -40,7 +71,38 @@ fn main() {
     }
 }
 
+fn command_search(query: &str) {
+    let query = query.trim().to_lowercase();
+    let items: Vec<Item> = COMMANDS
+        .iter()
+        .filter(|cmd| query.is_empty() || cmd.name.starts_with(query.as_str()))
+        .map(|cmd| {
+            ItemBuilder::new(format!(":{}", cmd.name))
+                .subtitle(cmd.subtitle)
+                .arg(format!(":{}", cmd.name))
+                .icon_path("./icon.png")
+                .into_item()
+        })
+        .collect();
+
+    if items.is_empty() {
+        let no_result = ItemBuilder::new("Unknown command")
+            .subtitle(format!("\"{}\" is not a recognized command", query))
+            .icon_path("./icon.png")
+            .valid(false)
+            .into_item();
+        let _ = json::write_items(io::stdout(), &[no_result]);
+    } else {
+        let _ = json::write_items(io::stdout(), &items);
+    }
+}
+
 fn search(keyword: &str) {
+    if let Some(cmd_part) = keyword.strip_prefix(':') {
+        command_search(cmd_part);
+        return;
+    }
+
     let bookmarks = extractor::extract_bookmarks();
     let keyword_lower = keyword.to_lowercase();
 

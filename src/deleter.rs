@@ -6,7 +6,6 @@ use std::path::{Path, PathBuf};
 pub fn delete(arg: &str) {
     let Some((source, url)) = arg.split_once('\t') else {
         eprintln!("Invalid delete argument: {}", arg);
-        println!("Error: Invalid argument format");
         return;
     };
 

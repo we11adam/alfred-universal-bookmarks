@@ -20,6 +20,25 @@ const FREQUENCY_DAYS: u64 = 7;
 const LAST_CHECK_FILE: &str = ".last_update_check";
 const LOG_FILE: &str = "updater.log";
 const MAX_LOG_BYTES: u64 = 512 * 1024; // 512 KB
+const TMP_WORKFLOW_PATH: &str = "/tmp/UniversalBookmarks-latest.alfredworkflow";
+
+struct LatestRelease {
+    json: String,
+    version: String,
+}
+
+struct WorkflowAsset {
+    arch: String,
+    download_url: String,
+}
+
+enum UpdateError {
+    Network,
+    ParseResponse,
+    NoAsset,
+    Download(String),
+    OpenInstaller,
+}
 
 /// Run the full update-check workflow. This is designed to be called from a
 /// background process (`./ub update &`) so it must never panic or block the
@@ -34,11 +53,12 @@ pub fn run() {
     // If running from a git checkout (development environment), skip auto-update.
     // This avoids the development workflow attempting to download and install
     // release assets while developing locally.
-    if let Ok(cwd) = env::current_dir()
-        && cwd.join(".git").exists() {
-            logger.log("Detected .git in current directory; running in development mode, skipping auto-update");
-            return;
-        }
+    if is_development_checkout() {
+        logger.log(
+            "Detected .git in current directory; running in development mode, skipping auto-update",
+        );
+        return;
+    }
 
     if let Err(e) = fs::create_dir_all(&cache_dir) {
         logger.log(&format!("ERROR: failed to create cache dir: {e}"));
@@ -47,10 +67,7 @@ pub fn run() {
 
     // ── Frequency gate ───────────────────────────────────────────────────────
     let check_file = cache_dir.join(LAST_CHECK_FILE);
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_secs();
+    let now = current_unix_timestamp();
 
     if let Ok(contents) = fs::read_to_string(&check_file) {
         if let Ok(last_check) = contents.trim().parse::<u64>() {
@@ -78,78 +95,180 @@ pub fn run() {
     logger.log(&format!("local version: {local_version}"));
 
     // ── Fetch latest release from GitHub ──────────────────────────────────────
-    let api_url = format!("https://api.github.com/repos/{REPO}/releases/latest");
+    let api_url = latest_release_api_url();
     logger.log(&format!("fetching: {api_url}"));
 
-    let release_json = match fetch_url(&api_url) {
-        Some(body) => body,
-        None => {
+    let release = match fetch_latest_release() {
+        Ok(release) => release,
+        Err(UpdateError::Network) => {
             logger.log("ERROR: failed to fetch release info from GitHub");
             return;
         }
-    };
-
-    // ── Parse remote version ─────────────────────────────────────────────────
-    let remote_version = match extract_json_string(&release_json, "tag_name") {
-        Some(tag) => tag.trim_start_matches('v').to_string(),
-        None => {
+        Err(UpdateError::ParseResponse) => {
             logger.log("ERROR: cannot parse tag_name from response");
             return;
         }
+        Err(_) => return,
     };
-    logger.log(&format!("remote version: {remote_version}"));
+    logger.log(&format!("remote version: {}", release.version));
 
     // ── Compare versions ─────────────────────────────────────────────────────
-    if local_version == remote_version {
+    if local_version == release.version {
         logger.log(&format!("up to date ({local_version})"));
         return;
     }
 
-    if !is_newer(&remote_version, local_version) {
+    if !is_newer(&release.version, local_version) {
         logger.log(&format!(
-            "local ({local_version}) is newer than remote ({remote_version}), skipping"
+            "local ({local_version}) is newer than remote ({}), skipping",
+            release.version
         ));
         return;
     }
 
     logger.log(&format!(
-        "update available: {local_version} → {remote_version}"
+        "update available: {local_version} → {}",
+        release.version
     ));
 
     // ── Detect binary architecture ───────────────────────────────────────────
-    let arch = detect_arch();
-    logger.log(&format!("binary architecture: {arch}"));
-
-    // ── Find download URL ────────────────────────────────────────────────────
-    let download_url = match find_workflow_asset(&release_json, &arch) {
-        Some(url) => url,
-        None => {
+    let asset = match select_workflow_asset(&release.json) {
+        Ok(asset) => asset,
+        Err(UpdateError::NoAsset) => {
             logger.log("ERROR: no .alfredworkflow asset in release");
             return;
         }
+        Err(_) => return,
     };
-    logger.log(&format!("download URL: {download_url}"));
+    logger.log(&format!("binary architecture: {}", asset.arch));
+    logger.log(&format!("download URL: {}", asset.download_url));
 
     // ── Download ─────────────────────────────────────────────────────────────
-    let tmp_path = "/tmp/UniversalBookmarks-latest.alfredworkflow";
-    logger.log(&format!("downloading to {tmp_path}..."));
+    logger.log(&format!("downloading to {TMP_WORKFLOW_PATH}..."));
 
-    match download_file(&download_url, tmp_path) {
-        Ok(_) => {}
-        Err(e) => {
+    let tmp_path = match download_workflow(&asset.download_url) {
+        Ok(path) => path,
+        Err(UpdateError::Download(e)) => {
             logger.log(&format!("ERROR: download failed: {e}"));
             return;
         }
-    }
+        Err(_) => return,
+    };
 
     // ── Install ──────────────────────────────────────────────────────────────
     logger.log(&format!("opening {tmp_path} for Alfred import"));
-    let _ = Command::new("open").arg(tmp_path).status();
+    let _ = open_workflow(tmp_path);
 
     logger.log("── updater finished ─────────────────────────────");
 }
 
+/// Run an immediate update check requested explicitly by the user (`:update` command).
+/// Bypasses the frequency gate and always performs a network check.
+/// Resets the frequency gate timestamp on success so the background auto-update
+/// won't fire again within FREQUENCY_DAYS.
+/// Returns a short human-readable result string suitable for an Alfred notification.
+pub fn run_once() -> String {
+    if is_development_checkout() {
+        return "Development mode – update skipped".to_string();
+    }
+
+    let cache_dir = resolve_cache_dir();
+    let _ = fs::create_dir_all(&cache_dir);
+
+    let local_version = env!("CARGO_PKG_VERSION");
+
+    let release = match fetch_latest_release() {
+        Ok(release) => release,
+        Err(UpdateError::Network) => return "Update check failed – network error".to_string(),
+        Err(UpdateError::ParseResponse) => {
+            return "Update check failed – could not parse response".to_string();
+        }
+        Err(_) => return "Update check failed".to_string(),
+    };
+
+    // Reset the frequency gate so background auto-update won't fire for another cycle.
+    let now = current_unix_timestamp();
+    let _ = fs::write(cache_dir.join(LAST_CHECK_FILE), now.to_string());
+
+    if local_version == release.version || !is_newer(&release.version, local_version) {
+        return format!("v{local_version} is the latest version");
+    }
+
+    let asset = match select_workflow_asset(&release.json) {
+        Ok(asset) => asset,
+        Err(UpdateError::NoAsset) => {
+            return format!("v{} is available but no asset was found", release.version);
+        }
+        Err(_) => return "Update check failed".to_string(),
+    };
+
+    let tmp_path = match download_workflow(&asset.download_url) {
+        Ok(path) => path,
+        Err(UpdateError::Download(e)) => return format!("Update download failed: {e}"),
+        Err(_) => return "Update download failed".to_string(),
+    };
+
+    match open_workflow(tmp_path) {
+        Ok(()) => format!(
+            "Installing v{} – Alfred will prompt to import",
+            release.version
+        ),
+        Err(_) => format!(
+            "Downloaded v{} but failed to open installer",
+            release.version
+        ),
+    }
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
+
+fn is_development_checkout() -> bool {
+    env::current_dir()
+        .map(|cwd| cwd.join(".git").exists())
+        .unwrap_or(false)
+}
+
+fn current_unix_timestamp() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs()
+}
+
+fn latest_release_api_url() -> String {
+    format!("https://api.github.com/repos/{REPO}/releases/latest")
+}
+
+fn fetch_latest_release() -> Result<LatestRelease, UpdateError> {
+    let release_json = fetch_url(&latest_release_api_url()).ok_or(UpdateError::Network)?;
+    let version = extract_json_string(&release_json, "tag_name")
+        .map(|tag| tag.trim_start_matches('v').to_string())
+        .ok_or(UpdateError::ParseResponse)?;
+
+    Ok(LatestRelease {
+        json: release_json,
+        version,
+    })
+}
+
+fn select_workflow_asset(release_json: &str) -> Result<WorkflowAsset, UpdateError> {
+    let arch = detect_arch();
+    let download_url = find_workflow_asset(release_json, &arch).ok_or(UpdateError::NoAsset)?;
+
+    Ok(WorkflowAsset { arch, download_url })
+}
+
+fn download_workflow(download_url: &str) -> Result<&'static str, UpdateError> {
+    download_file(download_url, TMP_WORKFLOW_PATH).map_err(UpdateError::Download)?;
+    Ok(TMP_WORKFLOW_PATH)
+}
+
+fn open_workflow(path: &str) -> Result<(), UpdateError> {
+    match Command::new("open").arg(path).status() {
+        Ok(status) if status.success() => Ok(()),
+        _ => Err(UpdateError::OpenInstaller),
+    }
+}
 
 /// Resolve the cache directory. Alfred sets `alfred_workflow_cache` at runtime;
 /// fall back to the conventional path using the bundle id.
