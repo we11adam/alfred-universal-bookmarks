@@ -419,6 +419,13 @@ fi</string>
 			<key>ypos</key>
 			<real>420</real>
 		</dict>
+		<key>B5C6D7E8-F9A0-4B1C-2D3E-4F5A6B7C8D9E</key>
+		<dict>
+			<key>xpos</key>
+			<real>625</real>
+			<key>ypos</key>
+			<real>560</real>
+		</dict>
 		<key>C3A3CB21-6F97-4B80-9885-2979AEAB6F2B</key>
 		<dict>
 			<key>xpos</key>
@@ -440,13 +447,6 @@ fi</string>
 			<key>ypos</key>
 			<real>280</real>
 		</dict>
-		<key>B5C6D7E8-F9A0-4B1C-2D3E-4F5A6B7C8D9E</key>
-		<dict>
-			<key>xpos</key>
-			<real>625</real>
-			<key>ypos</key>
-			<real>560</real>
-		</dict>
 	</dict>
 	<key>userconfigurationconfig</key>
 	<array/>
@@ -460,7 +460,7 @@ fi</string>
 		<string>UPDATER_DEBUG</string>
 	</array>
 	<key>version</key>
-	<string>0.2.1</string>
+	<string>0.3.0</string>
 	<key>webaddress</key>
 	<string>https://github.com/we11adam/alfred-universal-bookmarks</string>
 </dict>
